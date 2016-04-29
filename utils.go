@@ -2,6 +2,7 @@ package rplib
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"path/filepath"
 	"strconv"
@@ -81,4 +82,15 @@ func GetBootEntries(keyword string) (entries []string) {
 
 func CreateBootEntry(device string, partition int, loader string, label string) {
 	Shellexec("efibootmgr", "-c", "-d", device, "-p", fmt.Sprintf("%v", partition), "-l", loader, "-L", label)
+}
+
+func ReadKernelCmdline() string {
+	data, err := ioutil.ReadFile("/proc/cmdline")
+	Checkerr(err)
+	cmdline := string(data)
+	return cmdline
+}
+
+func IsKernelCmdlineContains(substr string) bool {
+	return strings.Contains(ReadKernelCmdline(), substr)
 }
