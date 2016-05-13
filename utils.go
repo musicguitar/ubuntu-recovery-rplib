@@ -34,12 +34,12 @@ func Findfs(arg string) string {
 func Realpath(path string) string {
 	newPath, err := filepath.Abs(path)
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 
 	newPath, err = filepath.EvalSymlinks(newPath)
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 	return newPath
 }
