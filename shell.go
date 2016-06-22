@@ -8,8 +8,8 @@ import (
 )
 
 func Shellexec(args ...string) {
+	log.Println(strings.Join(args, " "))
 	cmd := exec.Command(args[0], args[1:]...)
-	log.Println(cmd)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
@@ -17,8 +17,8 @@ func Shellexec(args ...string) {
 }
 
 func Shellexecoutput(args ...string) string {
+	log.Println(strings.Join(args, " "))
 	cmd := exec.Command(args[0], args[1:]...)
-	log.Println(cmd)
 	out, err := cmd.Output()
 	Checkerr(err)
 
@@ -27,7 +27,7 @@ func Shellexecoutput(args ...string) string {
 
 func Shellcmd(command string) {
 	cmd := exec.Command("sh", "-c", command)
-	log.Println(cmd)
+	log.Println(cmd.Args)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
@@ -36,7 +36,7 @@ func Shellcmd(command string) {
 
 func Shellcmdoutput(command string) string {
 	cmd := exec.Command("sh", "-c", command)
-	log.Println(cmd)
+	log.Println(cmd.Args)
 	out, err := cmd.Output()
 	Checkerr(err)
 
