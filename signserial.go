@@ -66,10 +66,9 @@ func SignSerial(authority, brand, model, revision, targetFolder, vaultServer str
 	content := Serial(authority, key, brand, model, revision, serial, time.Now())
 	body := bytes.NewBuffer([]byte(content))
 
-	log.Println(content)
 	vaultServer = strings.TrimRight(vaultServer, "/")
 	log.Println("vaultServer:", vaultServer)
-	r, err := http.Post(vaultServer+"/sign", "application/x-www-form-urlencoded", body)
+	r, err := http.Post(vaultServer, "application/x-www-form-urlencoded", body)
 	Checkerr(err)
 	response, err := ioutil.ReadAll(r.Body)
 	if nil != err {
