@@ -17,6 +17,9 @@ import (
 	"golang.org/x/crypto/openpgp"
 )
 
+var SerialUnsigned = "serialUnsigned.txt"
+var SerialSigned = "serial.txt"
+
 func Serial(authority, key, brand, model, revision, serial string, t time.Time) string {
 	content := fmt.Sprintf("type: serial\nauthority-id: %s\ndevice-key: %s\nbrand-id: %s\nmodel: %s\nrevision: %s\nserial: %s\ntimestamp: %s\n\n%s\n", authority, key, brand, model, revision, serial, t.UTC().Format("2006-01-02T15:04:05Z"), key)
 	return content
@@ -40,10 +43,10 @@ func isJSON(s string) bool {
 
 }
 
-func SignSerial(modelAssertion asserts.Assertion, targetFolder string, vaultServer string) (err error) {
+func SerialAssertionGen(modelAssertion asserts.Assertion, targetFolder string) (serialAssertion string, err error) {
 	if modelAssertion.Type() != asserts.ModelType {
 		err = errors.New("not a model assertion")
-		return err
+		return "", err
 	}
 
 	authority := modelAssertion.Header("authority-id")
@@ -85,7 +88,14 @@ func SignSerial(modelAssertion asserts.Assertion, targetFolder string, vaultServ
 	Checkerr(err)
 	serial := strings.Split(string(product_serial), "\n")[0] + "-" + uuid.NewV4().String()
 
-	content := Serial(authority, key, brand, model, revision, serial, time.Now())
+	serialAssertion = Serial(authority, key, brand, model, revision, serial, time.Now())
+
+	return serialAssertion, nil
+}
+
+func SignSerial(modelAssertion asserts.Assertion, targetFolder string, vaultServer string) (err error) {
+	content, err := SerialAssertionGen(modelAssertion, targetFolder)
+	Checkerr(err)
 	body := bytes.NewBuffer([]byte(content))
 
 	vaultServer = strings.TrimRight(vaultServer, "/")
@@ -96,7 +106,7 @@ func SignSerial(modelAssertion asserts.Assertion, targetFolder string, vaultServ
 	if nil != err {
 		log.Fatal("Serial Sign error:", err)
 	}
-	err = ioutil.WriteFile(targetFolder+"/serial.txt", response, 0600)
+	err = ioutil.WriteFile(targetFolder+"/"+SerialSigned, response, 0600)
 	Checkerr(err)
 
 	if isJSON(string(response)) {
