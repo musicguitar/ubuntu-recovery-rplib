@@ -61,12 +61,12 @@ type YamlConfig struct {
 	}
 }
 
-type ConfigAll struct {
+type ConfigRecovery struct {
 	Yaml YamlConfig
 	Opt  OptString
 }
 
-var config ConfigAll
+var config ConfigRecovery
 
 func loadDefaultOptValue() {
 	config.Opt.Kernel = "--kernel"
@@ -205,7 +205,7 @@ func printConfigs() {
 	fmt.Println("-----------------------------------------------")
 }
 
-func LoadYamlConfig(configFile string) (ConfigAll, bool) {
+func LoadYamlConfig(configFile string) (ConfigRecovery, bool) {
 	fmt.Printf("Loading config file %s ...\n", configFile)
 	filename, _ := filepath.Abs(configFile)
 	yamlFile, err := ioutil.ReadFile(filename)
