@@ -58,6 +58,7 @@ type YamlConfig struct {
 		BootImage       string `yaml:"boot-image"`
 		SystembootImage string `yaml:"systemboot-image"`
 		WritableImage   string `yaml:"writable-image"`
+		SignSerial      bool   `yaml:"sign-serial"`
 	}
 }
 
@@ -202,6 +203,7 @@ func printConfigs() {
 	fmt.Println("boot image: ", config.Yaml.Recovery.BootImage)
 	fmt.Println("system-boot image: ", config.Yaml.Recovery.SystembootImage)
 	fmt.Println("writable image: ", config.Yaml.Recovery.WritableImage)
+	fmt.Println("sign serial: ", config.Yaml.Recovery.SignSerial)
 	fmt.Println("-----------------------------------------------")
 }
 
