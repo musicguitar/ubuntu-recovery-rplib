@@ -93,25 +93,32 @@ func SerialAssertionGen(modelAssertion asserts.Assertion, targetFolder string) (
 	return serialAssertion, nil
 }
 
-func SignSerial(modelAssertion asserts.Assertion, targetFolder string, vaultServer string) (err error) {
+func SignSerial(modelAssertion asserts.Assertion, targetFolder string, vaultServer string, apikey string) (err error) {
 	content, err := SerialAssertionGen(modelAssertion, targetFolder)
 	Checkerr(err)
 	body := bytes.NewBuffer([]byte(content))
 
 	vaultServer = strings.TrimRight(vaultServer, "/")
 	log.Println("vaultServer:", vaultServer)
-	r, err := http.Post(vaultServer, "application/x-www-form-urlencoded", body)
+	req, err := http.NewRequest("POST", vaultServer, body)
 	Checkerr(err)
-	response, err := ioutil.ReadAll(r.Body)
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("api-key", apikey)
+
+	client := &http.Client{}
+	response, err := client.Do(req)
 	if nil != err {
 		log.Fatal("Serial Sign error:", err)
 	}
-	err = ioutil.WriteFile(targetFolder+"/"+SerialSigned, response, 0600)
-	Checkerr(err)
+	defer response.Body.Close()
 
-	if isJSON(string(response)) {
-		log.Fatal("Serial Sign error:", string(response))
+	returnBody, _ := ioutil.ReadAll(response.Body)
+	if isJSON(string(returnBody)) {
+		log.Fatal("Serial Sign error:", string(returnBody))
 	}
+
+	err = ioutil.WriteFile(targetFolder+"/"+SerialSigned, returnBody, 0600)
+	Checkerr(err)
 
 	log.Println("Sign serial assertion successfully!.")
 	return nil
