@@ -191,7 +191,7 @@ func printConfigs() {
 	fmt.Println("channel: ", config.Yaml.Configs.Channel)
 	fmt.Println("size: ", config.Yaml.Configs.Size)
 	fmt.Println("oemhookdir: ", config.Yaml.Configs.OemHookDir)
-	fmt.Println("oemfmt.ir: ", config.Yaml.Configs.OemLogDir)
+	fmt.Println("oemlogdir: ", config.Yaml.Configs.OemLogDir)
 	fmt.Println("udf binary: ", config.Yaml.Udf.Binary)
 	fmt.Println("udf option: ", config.Yaml.Udf.Option)
 	fmt.Println("devmode: ", config.Yaml.Debug.Devmode)
