@@ -17,8 +17,10 @@ import (
 	"golang.org/x/crypto/openpgp"
 )
 
-var SerialUnsigned = "serialUnsigned.txt"
-var SerialSigned = "serial.txt"
+const KEYLENGTH = 4096
+const KEYID = "SERIAL"
+const SerialUnsigned = "serialUnsigned.txt"
+const SerialSigned = "serial.txt"
 
 func Serial(authority, key, brand, model, revision, serial string, t time.Time) string {
 	content := fmt.Sprintf("type: serial\nauthority-id: %s\ndevice-key: %s\nbrand-id: %s\nmodel: %s\nrevision: %s\nserial: %s\ntimestamp: %s\n\n%s\n", authority, key, brand, model, revision, serial, t.UTC().Format("2006-01-02T15:04:05Z"), key)
@@ -61,10 +63,16 @@ func SerialAssertionGen(modelAssertion asserts.Assertion, targetFolder string) (
 	// generate gpg key pair
 	log.Println("targetFolder:", targetFolder)
 	gnupgHomedir := targetFolder + "/.gnupg/"
+
+	if _, err := os.Stat(gnupgHomedir); err == nil {
+		// gpg folder already exist
+		err = errors.New(fmt.Sprintf("gpg folder %s already exist!", gnupgHomedir))
+		return "", err
+	}
 	err = os.MkdirAll(gnupgHomedir, 0700)
 	Checkerr(err)
 
-	genkey := []byte("Key-Type: 1\nKey-Length: 4096\nName-Real: SERIAL\n")
+	genkey := []byte(fmt.Sprintf("Key-Type: 1\nKey-Length: %d\nName-Real: %s\n", KEYLENGTH, KEYID))
 	err = ioutil.WriteFile("/tmp/gen-key-script", genkey, 0600)
 	Checkerr(err)
 
@@ -75,7 +83,7 @@ func SerialAssertionGen(modelAssertion asserts.Assertion, targetFolder string) (
 	Checkerr(err)
 	el, err := openpgp.ReadKeyRing(f)
 	Checkerr(err)
-	entity := getKeyByName(el, "SERIAL")
+	entity := getKeyByName(el, KEYID)
 	openPGPPublicKey := asserts.OpenPGPPublicKey(entity.PrimaryKey)
 	encodeKey, err := asserts.EncodePublicKey(openPGPPublicKey)
 	Checkerr(err)
@@ -84,7 +92,7 @@ func SerialAssertionGen(modelAssertion asserts.Assertion, targetFolder string) (
 	// TODO: clarify the format of encodeKey
 	key = strings.Replace(key, "\n", "", -1)
 
-	product_serial, err := ioutil.ReadFile("/sys/class/dmi/id/product_serial")
+	product_serial, err := ioutil.ReadFile(SMBIOS_SERIAL)
 	Checkerr(err)
 	serial := strings.Split(string(product_serial), "\n")[0] + "-" + uuid.NewV4().String()
 
@@ -95,9 +103,12 @@ func SerialAssertionGen(modelAssertion asserts.Assertion, targetFolder string) (
 
 func SignSerial(modelAssertion asserts.Assertion, targetFolder string, vaultServer string, apikey string) (err error) {
 	content, err := SerialAssertionGen(modelAssertion, targetFolder)
-	Checkerr(err)
+	if nil != err {
+		return err
+	}
 	body := bytes.NewBuffer([]byte(content))
 
+	// send http request
 	vaultServer = strings.TrimRight(vaultServer, "/")
 	log.Println("vaultServer:", vaultServer)
 	req, err := http.NewRequest("POST", vaultServer, body)
@@ -114,6 +125,7 @@ func SignSerial(modelAssertion asserts.Assertion, targetFolder string, vaultServ
 
 	returnBody, _ := ioutil.ReadAll(response.Body)
 	if isJSON(string(returnBody)) {
+		// sign server return error message in json form
 		log.Fatal("Serial Sign error:", string(returnBody))
 	}
 
