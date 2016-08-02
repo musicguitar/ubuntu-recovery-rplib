@@ -29,17 +29,18 @@ type YamlConfig struct {
 		Gadget string
 	}
 	Configs struct {
-		Arch         string
-		BaseImage    string
-		RecoveryType string
-		RecoverySize string
-		Release      string
-		Store        string
-		Device       string
-		Channel      string
-		Size         string
-		OemHookDir   string
-		OemLogDir    string
+		Arch               string
+		BaseImage          string
+		RecoveryType       string
+		RecoverySize       string
+		Release            string
+		Store              string
+		Device             string
+		Channel            string
+		Size               string
+		OemPreinstHookDir  string `yaml:"oem-preinst-hook-dir"`
+		OemPostinstHookDir string `yaml:"oem-postinst-hook-dir"`
+		OemLogDir          string
 	}
 	Udf struct {
 		Binary string
@@ -190,7 +191,8 @@ func printConfigs() {
 	fmt.Println("device: ", config.Yaml.Configs.Device)
 	fmt.Println("channel: ", config.Yaml.Configs.Channel)
 	fmt.Println("size: ", config.Yaml.Configs.Size)
-	fmt.Println("oemhookdir: ", config.Yaml.Configs.OemHookDir)
+	fmt.Println("oem-preinst-hook-dir: ", config.Yaml.Configs.OemPreinstHookDir)
+	fmt.Println("oem-postinst-hook-dir: ", config.Yaml.Configs.OemPostinstHookDir)
 	fmt.Println("oemlogdir: ", config.Yaml.Configs.OemLogDir)
 	fmt.Println("udf binary: ", config.Yaml.Udf.Binary)
 	fmt.Println("udf option: ", config.Yaml.Udf.Option)
