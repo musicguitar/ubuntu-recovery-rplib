@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -46,6 +47,9 @@ func isJSON(s string) bool {
 }
 
 func SerialAssertionGen(modelAssertion asserts.Assertion, targetFolder string) (serialAssertion string, err error) {
+	gnupgHomedir := filepath.Join(targetFolder, ".gnupg/")
+	publicKeyFile := filepath.Join(gnupgHomedir, "pubring.gpg")
+
 	if modelAssertion.Type() != asserts.ModelType {
 		err = errors.New("not a model assertion")
 		return "", err
@@ -62,7 +66,7 @@ func SerialAssertionGen(modelAssertion asserts.Assertion, targetFolder string) (
 
 	// generate gpg key pair
 	log.Println("targetFolder:", targetFolder)
-	gnupgHomedir := targetFolder + "/.gnupg/"
+	os.MkdirAll(targetFolder, 0755)
 
 	if _, err := os.Stat(gnupgHomedir); err == nil {
 		// gpg folder already exist
@@ -79,7 +83,7 @@ func SerialAssertionGen(modelAssertion asserts.Assertion, targetFolder string) (
 	Shellexec("gpg", "--homedir="+gnupgHomedir, "--batch", "--gen-key", "/tmp/gen-key-script")
 
 	// Read public key
-	f, err := os.Open(gnupgHomedir + "/pubring.gpg")
+	f, err := os.Open(publicKeyFile)
 	Checkerr(err)
 	el, err := openpgp.ReadKeyRing(f)
 	Checkerr(err)
@@ -92,9 +96,10 @@ func SerialAssertionGen(modelAssertion asserts.Assertion, targetFolder string) (
 	// TODO: clarify the format of encodeKey
 	key = strings.Replace(key, "\n", "", -1)
 
-	product_serial, err := ioutil.ReadFile(SMBIOS_SERIAL)
+	product_serial_content, err := ioutil.ReadFile(SMBIOS_SERIAL)
+	product_serial := strings.Split(string(product_serial_content), "\n")[0]
 	Checkerr(err)
-	serial := strings.Split(string(product_serial), "\n")[0] + "-" + uuid.NewV4().String()
+	serial := product_serial + "-" + uuid.NewV4().String()
 
 	serialAssertion = Serial(authority, key, brand, model, revision, serial, time.Now())
 
@@ -102,6 +107,8 @@ func SerialAssertionGen(modelAssertion asserts.Assertion, targetFolder string) (
 }
 
 func SignSerial(modelAssertion asserts.Assertion, targetFolder string, vaultServer string, apikey string) (err error) {
+	signedFile := filepath.Join(targetFolder, SerialSigned)
+
 	content, err := SerialAssertionGen(modelAssertion, targetFolder)
 	if nil != err {
 		return err
@@ -129,7 +136,7 @@ func SignSerial(modelAssertion asserts.Assertion, targetFolder string, vaultServ
 		log.Fatal("Serial Sign error:", string(returnBody))
 	}
 
-	err = ioutil.WriteFile(targetFolder+"/"+SerialSigned, returnBody, 0600)
+	err = ioutil.WriteFile(signedFile, returnBody, 0600)
 	Checkerr(err)
 
 	log.Println("Sign serial assertion successfully!.")
