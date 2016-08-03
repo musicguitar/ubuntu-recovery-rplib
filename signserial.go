@@ -23,6 +23,7 @@ const KEYID = "SERIAL"
 const SerialUnsigned = "serialUnsigned.txt"
 const SerialSigned = "serial.txt"
 
+// TODO: need stringify function from snapd asserts module
 func Serial(authority, key, brand, model, revision, serial string, t time.Time) string {
 	content := fmt.Sprintf("type: serial\nauthority-id: %s\ndevice-key: %s\nbrand-id: %s\nmodel: %s\nrevision: %s\nserial: %s\ntimestamp: %s\n\n%s\n", authority, key, brand, model, revision, serial, t.UTC().Format("2006-01-02T15:04:05Z"), key)
 	return content
@@ -46,9 +47,10 @@ func isJSON(s string) bool {
 
 }
 
-func SerialAssertionGen(modelAssertion asserts.Assertion, targetFolder string) (serialAssertion string, err error) {
+func SerialAssertionGen(modelAssertion asserts.Assertion, targetFolder string) (serialAssertionUnsigned string, err error) {
 	gnupgHomedir := filepath.Join(targetFolder, ".gnupg/")
 	publicKeyFile := filepath.Join(gnupgHomedir, "pubring.gpg")
+	unsignedFile := filepath.Join(targetFolder, SerialUnsigned)
 
 	if modelAssertion.Type() != asserts.ModelType {
 		err = errors.New("not a model assertion")
@@ -70,7 +72,7 @@ func SerialAssertionGen(modelAssertion asserts.Assertion, targetFolder string) (
 
 	if _, err := os.Stat(gnupgHomedir); err == nil {
 		// gpg folder already exist
-		err = errors.New(fmt.Sprintf("gpg folder %s already exist!", gnupgHomedir))
+		log.Fatal(fmt.Sprintf("gpg folder %s already exist!", gnupgHomedir))
 		return "", err
 	}
 	err = os.MkdirAll(gnupgHomedir, 0700)
@@ -101,9 +103,9 @@ func SerialAssertionGen(modelAssertion asserts.Assertion, targetFolder string) (
 	Checkerr(err)
 	serial := product_serial + "-" + uuid.NewV4().String()
 
-	serialAssertion = Serial(authority, key, brand, model, revision, serial, time.Now())
-
-	return serialAssertion, nil
+	serialAssertionUnsigned = Serial(authority, key, brand, model, revision, serial, time.Now())
+	err = ioutil.WriteFile(unsignedFile, []byte(serialAssertionUnsigned), 0644)
+	return serialAssertionUnsigned, nil
 }
 
 func SignSerial(modelAssertion asserts.Assertion, targetFolder string, vaultServer string, apikey string) (err error) {
