@@ -52,15 +52,16 @@ type YamlConfig struct {
 		Xz      bool
 	}
 	Recovery struct {
-		FsLabel         string `yaml:"filesystem-label"`
-		BootPart        string `yaml:"boot-partition"`
-		SystembootPart  string `yaml:"systemboot-partition"`
-		WritablePart    string `yaml:"writable-partition"`
-		BootImage       string `yaml:"boot-image"`
-		SystembootImage string `yaml:"systemboot-image"`
-		WritableImage   string `yaml:"writable-image"`
-		SignSerial      bool   `yaml:"sign-serial"`
-		SignApiKey      string `yaml:"sign-api-key"`
+		FsLabel               string `yaml:"filesystem-label"`
+		BootPart              string `yaml:"boot-partition"`
+		SystembootPart        string `yaml:"systemboot-partition"`
+		WritablePart          string `yaml:"writable-partition"`
+		BootImage             string `yaml:"boot-image"`
+		SystembootImage       string `yaml:"systemboot-image"`
+		WritableImage         string `yaml:"writable-image"`
+		SignSerial            bool   `yaml:"sign-serial"`
+		SignApiKey            string `yaml:"sign-api-key"`
+		SkipFactoryDiagResult string `yaml:"skip-factory-diag-result"`
 	}
 }
 
@@ -208,6 +209,7 @@ func printConfigs() {
 	fmt.Println("writable image: ", config.Yaml.Recovery.WritableImage)
 	fmt.Println("sign serial: ", config.Yaml.Recovery.SignSerial)
 	fmt.Println("sign api key: ", config.Yaml.Recovery.SignApiKey)
+	fmt.Println("skip factory-diag result: ", config.Yaml.Recovery.SkipFactoryDiagResult)
 	fmt.Println("-----------------------------------------------")
 }
 
