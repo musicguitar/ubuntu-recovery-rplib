@@ -1,5 +1,7 @@
 package rplib
 
+// RECOVERY_TYPE
+const FIELD_TRANSITION = "field_transition"
 const FACTORY_INSTALL = "factory_install"
 const FACTORY_RESTORE = "factory_restore"
 

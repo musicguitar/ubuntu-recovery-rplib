@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -25,6 +26,18 @@ func Sync() {
 
 func Reboot() {
 	Shellexec("reboot")
+}
+
+func FindDevice(blockDevice string) (device string, err error) {
+	syspath := path.Dir(Realpath(filepath.Join("/sys/class/block", path.Base(blockDevice))))
+
+	dat, err := ioutil.ReadFile(fmt.Sprintf("%s/dev", syspath))
+	if err != nil {
+		return "", err
+	}
+	dat_str := strings.TrimSpace(string(dat))
+	device = Realpath(fmt.Sprintf("/dev/block/%s", dat_str))
+	return device, nil
 }
 
 func Findfs(arg string) string {

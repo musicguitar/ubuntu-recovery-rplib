@@ -52,7 +52,9 @@ type YamlConfig struct {
 		Xz      bool
 	}
 	Recovery struct {
+		Type                  string // one of "field_transition", "factory_install"
 		FsLabel               string `yaml:"filesystem-label"`
+		TransitionFsLabel     string
 		BootPart              string `yaml:"boot-partition"`
 		SystembootPart        string `yaml:"systemboot-partition"`
 		WritablePart          string `yaml:"writable-partition"`
@@ -162,7 +164,7 @@ func checkConfigs() bool {
 		config.Opt.Devmode = "--developer-mode"
 	}
 
-	if config.Yaml.Debug.Devmode {
+	if config.Yaml.Debug.Ssh {
 		config.Opt.Ssh = "--enable-ssh"
 	}
 

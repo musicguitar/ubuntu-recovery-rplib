@@ -6,6 +6,7 @@ import (
 	"os/exec"
 )
 
+// Panic on error
 func Checkerr(err error) {
 	if err != nil {
 		log.Panic(err)
