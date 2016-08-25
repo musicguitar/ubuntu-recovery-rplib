@@ -15,9 +15,8 @@ const (
 )
 
 func DD(input string, output string, args ...string) {
-	args = append([]string{"dd", fmt.Sprintf("if=%s", input), fmt.Sprintf("of=%s", output)}, args...)
-	// Shellexec("dd", fmt.Sprintf("if=%s", input), fmt.Sprintf("of=%s", output), args[0:]...)
-	Shellexec(args...)
+	args = append([]string{fmt.Sprintf("if=%s", input), fmt.Sprintf("of=%s", output)}, args...)
+	Shellexec("dd", args...)
 }
 
 func Sync() {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"log"
 	"path/filepath"
 )
 
@@ -41,10 +42,11 @@ type YamlConfig struct {
 		OemPreinstHookDir  string `yaml:"oem-preinst-hook-dir"`
 		OemPostinstHookDir string `yaml:"oem-postinst-hook-dir"`
 		OemLogDir          string
+		Packages           []string
 	}
 	Udf struct {
-		Binary string
-		Option string
+		Binary  string
+		Command string
 	}
 	Debug struct {
 		Devmode bool
@@ -146,8 +148,8 @@ func checkConfigs() bool {
 		errCount++
 	}
 
-	if config.Yaml.Udf.Option == "" {
-		fmt.Println("Error: parse config.yaml failed, need to specify 'udf -> option' field")
+	if config.Yaml.Udf.Command == "" {
+		fmt.Println("Error: parse config.yaml failed, need to specify 'udf -> command' field")
 		errCount++
 	}
 
@@ -179,42 +181,6 @@ func checkConfigs() bool {
 	return false
 }
 
-func printConfigs() {
-	fmt.Printf("Configs from yaml file\n")
-	fmt.Println("-----------------------------------------------")
-	fmt.Println("project: ", config.Yaml.Project)
-	fmt.Println("kernel: ", config.Yaml.Snaps.Kernel)
-	fmt.Println("os: ", config.Yaml.Snaps.Os)
-	fmt.Println("gadget: ", config.Yaml.Snaps.Gadget)
-	fmt.Println("baseimage: ", config.Yaml.Configs.BaseImage)
-	fmt.Println("recoverytype: ", config.Yaml.Configs.RecoveryType)
-	fmt.Println("recoverysize: ", config.Yaml.Configs.RecoverySize)
-	fmt.Println("release: ", config.Yaml.Configs.Release)
-	fmt.Println("store: ", config.Yaml.Configs.Store)
-	fmt.Println("device: ", config.Yaml.Configs.Device)
-	fmt.Println("channel: ", config.Yaml.Configs.Channel)
-	fmt.Println("size: ", config.Yaml.Configs.Size)
-	fmt.Println("oem-preinst-hook-dir: ", config.Yaml.Configs.OemPreinstHookDir)
-	fmt.Println("oem-postinst-hook-dir: ", config.Yaml.Configs.OemPostinstHookDir)
-	fmt.Println("oemlogdir: ", config.Yaml.Configs.OemLogDir)
-	fmt.Println("udf binary: ", config.Yaml.Udf.Binary)
-	fmt.Println("udf option: ", config.Yaml.Udf.Option)
-	fmt.Println("devmode: ", config.Yaml.Debug.Devmode)
-	fmt.Println("ssh: ", config.Yaml.Debug.Ssh)
-	fmt.Println("xz: ", config.Yaml.Debug.Xz)
-	fmt.Println("fslabel: ", config.Yaml.Recovery.FsLabel)
-	fmt.Println("boot partition: ", config.Yaml.Recovery.BootPart)
-	fmt.Println("system-boot partition: ", config.Yaml.Recovery.SystembootPart)
-	fmt.Println("writable partition: ", config.Yaml.Recovery.WritablePart)
-	fmt.Println("boot image: ", config.Yaml.Recovery.BootImage)
-	fmt.Println("system-boot image: ", config.Yaml.Recovery.SystembootImage)
-	fmt.Println("writable image: ", config.Yaml.Recovery.WritableImage)
-	fmt.Println("sign serial: ", config.Yaml.Recovery.SignSerial)
-	fmt.Println("sign api key: ", config.Yaml.Recovery.SignApiKey)
-	fmt.Println("skip factory-diag result: ", config.Yaml.Recovery.SkipFactoryDiagResult)
-	fmt.Println("-----------------------------------------------")
-}
-
 func LoadYamlConfig(configFile string) (ConfigRecovery, bool) {
 	fmt.Printf("Loading config file %s ...\n", configFile)
 	filename, _ := filepath.Abs(configFile)
@@ -235,8 +201,31 @@ func LoadYamlConfig(configFile string) (ConfigRecovery, bool) {
 		panic(err)
 	}
 
+	io, err := yaml.Marshal(config.Yaml)
+	if err != nil {
+		panic(err)
+	}
+	log.Println(string(io))
+
 	// Check if there is any config missing
 	errBool := checkConfigs()
-	printConfigs()
 	return config, errBool
+}
+
+func (configs *ConfigRecovery) ExecuteUDF() {
+	args := []string{configs.Yaml.Udf.Command, configs.Yaml.Configs.Release,
+		configs.Opt.Store, configs.Yaml.Configs.Store,
+		configs.Opt.Device, configs.Yaml.Configs.Device,
+		configs.Opt.Channel, configs.Yaml.Configs.Channel,
+		configs.Opt.BaseImage, configs.Yaml.Configs.BaseImage,
+		configs.Opt.Ssh,
+		configs.Opt.Size, configs.Yaml.Configs.Size,
+		configs.Opt.Devmode,
+		configs.Opt.Kernel, configs.Yaml.Snaps.Kernel,
+		configs.Opt.Os, configs.Yaml.Snaps.Os,
+		configs.Opt.Gadget, configs.Yaml.Snaps.Gadget}
+	for _, snap := range configs.Yaml.Configs.Packages {
+		args = append(args, "--install="+snap)
+	}
+	Shellexec(configs.Yaml.Udf.Binary, args...)
 }

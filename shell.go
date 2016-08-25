@@ -7,18 +7,18 @@ import (
 	"strings"
 )
 
-func Shellexec(args ...string) {
-	log.Println(strings.Join(args, " "))
-	cmd := exec.Command(args[0], args[1:]...)
+func Shellexec(name string, args ...string) {
+	log.Println(name + " " + strings.Join(args, " "))
+	cmd := exec.Command(name, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	Checkerr(err)
 }
 
-func Shellexecoutput(args ...string) string {
-	log.Println(strings.Join(args, " "))
-	cmd := exec.Command(args[0], args[1:]...)
+func Shellexecoutput(name string, args ...string) string {
+	log.Println(name + " " + strings.Join(args, " "))
+	cmd := exec.Command(name, args...)
 	out, err := cmd.Output()
 	Checkerr(err)
 
