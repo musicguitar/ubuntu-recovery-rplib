@@ -1,28 +1,13 @@
 package rplib
 
 import (
-	"fmt"
+	"errors"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
-	"path/filepath"
 )
 
-type OptString struct {
-	Kernel    string
-	Os        string
-	Gadget    string
-	BaseImage string
-	Store     string
-	Device    string
-	Channel   string
-	Size      string
-	Devmode   string
-	Ssh       string
-}
-
-// config.yaml from yaml file
-type YamlConfig struct {
+type ConfigRecovery struct {
 	Project string
 	Snaps   struct {
 		Kernel string
@@ -69,163 +54,131 @@ type YamlConfig struct {
 	}
 }
 
-type ConfigRecovery struct {
-	Yaml YamlConfig
-	Opt  OptString
+func (config *ConfigRecovery) checkConfigs() (err error) {
+	log.Println("check configs ... ")
+
+	if config.Project == "" {
+		err = errors.New("'project' field not presented")
+		log.Println(err)
+	}
+
+	if config.Snaps.Kernel == "" {
+		err = errors.New("'snaps -> kernel' field not presented")
+		log.Println(err)
+	}
+
+	if config.Snaps.Os == "" {
+		err = errors.New("'snaps -> os' field not presented")
+		log.Println(err)
+	}
+
+	if config.Snaps.Gadget == "" {
+		err = errors.New("'snaps -> gadget' field not presented")
+		log.Println(err)
+	}
+
+	if config.Configs.BaseImage == "" {
+		err = errors.New("'configs -> baseimage' field not presented")
+		log.Println(err)
+	}
+
+	if config.Configs.RecoveryType == "" {
+		err = errors.New("'configs -> recoverytype' field not presented")
+		log.Println(err)
+	}
+
+	if config.Configs.RecoverySize == "" {
+		err = errors.New("'configs -> recoverysize' field not presented")
+		log.Println(err)
+	}
+
+	if config.Configs.Release == "" {
+		err = errors.New("'configs -> release' field not presented")
+		log.Println(err)
+	}
+
+	if config.Configs.Channel == "" {
+		err = errors.New("'configs -> channel' field not presented")
+		log.Println(err)
+	}
+
+	if config.Configs.Size == "" {
+		err = errors.New("'configs -> size' field not presented")
+		log.Println(err)
+	}
+
+	if config.Udf.Binary == "" {
+		err = errors.New("'udf -> binary' field not presented")
+		log.Println(err)
+	}
+
+	if config.Udf.Command == "" {
+		err = errors.New("'udf -> command' field not presented")
+		log.Println(err)
+	}
+
+	if config.Recovery.FsLabel == "" {
+		err = errors.New("'recovery -> filesystem-label' field not presented")
+		log.Println(err)
+	}
+
+	return err
 }
 
-var config ConfigRecovery
-
-func loadDefaultOptValue() {
-	config.Opt.Kernel = "--kernel"
-	config.Opt.Os = "--os"
-	config.Opt.Gadget = "--gadget"
-	config.Opt.BaseImage = "--output"
-	config.Opt.Store = ""
-	config.Opt.Device = ""
-	config.Opt.Channel = "--channel"
-	config.Opt.Size = "--size"
-	config.Opt.Devmode = ""
-	config.Opt.Ssh = ""
-}
-
-func checkConfigs() bool {
-	fmt.Printf("check configs ... \n")
-
-	errCount := 0
-	if config.Yaml.Project == "" {
-		fmt.Println("Error: parse config.yaml failed, need to specify 'project' field")
-		errCount++
-	}
-
-	if config.Yaml.Snaps.Kernel == "" {
-		fmt.Println("Error: parse config.yaml failed, need to specify 'snaps -> kernel' field")
-		errCount++
-	}
-
-	if config.Yaml.Snaps.Os == "" {
-		fmt.Println("Error: parse config.yaml failed, need to specify 'snaps -> os' field")
-		errCount++
-	}
-
-	if config.Yaml.Snaps.Gadget == "" {
-		fmt.Println("Error: parse config.yaml failed, need to specify 'snaps -> gadget' field")
-		errCount++
-	}
-
-	if config.Yaml.Configs.BaseImage == "" {
-		fmt.Println("Error: parse config.yaml failed, need to specify 'config.yaml.-> baseimage' field")
-		errCount++
-	}
-
-	if config.Yaml.Configs.RecoveryType == "" {
-		fmt.Println("Error: parse config.yaml failed, need to specify 'config.yaml.-> recoverytype' field")
-		errCount++
-	}
-
-	if config.Yaml.Configs.RecoverySize == "" {
-		fmt.Println("Error: parse config.yaml failed, need to specify 'config.yaml.-> recoverysize' field")
-		errCount++
-	}
-
-	if config.Yaml.Configs.Release == "" {
-		fmt.Println("Error: parse config.yaml failed, need to specify 'config.yaml.-> release' field")
-		errCount++
-	}
-
-	if config.Yaml.Configs.Channel == "" {
-		fmt.Println("Error: parse config.yaml failed, need to specify 'config.yaml.-> channel' field")
-		errCount++
-	}
-
-	if config.Yaml.Configs.Size == "" {
-		fmt.Println("Error: parse config.yaml failed, need to specify 'config.yaml.-> size' field")
-		errCount++
-	}
-
-	if config.Yaml.Udf.Binary == "" {
-		fmt.Println("Error: parse config.yaml failed, need to specify 'udf -> binary' field")
-		errCount++
-	}
-
-	if config.Yaml.Udf.Command == "" {
-		fmt.Println("Error: parse config.yaml failed, need to specify 'udf -> command' field")
-		errCount++
-	}
-
-	if config.Yaml.Recovery.FsLabel == "" {
-		fmt.Println("Error: parse config.yaml failed, need to specify 'recovery -> filesystem-label' field")
-		errCount++
-	}
-
-	if errCount > 0 {
-		return true
-	}
-
-	if config.Yaml.Debug.Devmode {
-		config.Opt.Devmode = "--developer-mode"
-	}
-
-	if config.Yaml.Debug.Ssh {
-		config.Opt.Ssh = "--enable-ssh"
-	}
-
-	if config.Yaml.Configs.Store != "" {
-		config.Opt.Store = "--store"
-	}
-
-	if config.Yaml.Configs.Device != "" {
-		config.Opt.Device = "--device"
-	}
-
-	return false
-}
-
-func LoadYamlConfig(configFile string) (ConfigRecovery, bool) {
-	fmt.Printf("Loading config file %s ...\n", configFile)
-	filename, _ := filepath.Abs(configFile)
-	yamlFile, err := ioutil.ReadFile(filename)
-
-	// Load default option string
-	loadDefaultOptValue()
+func (config *ConfigRecovery) Load(configFile string) error {
+	log.Println("Loading config file %s ...", configFile)
+	yamlFile, err := ioutil.ReadFile(configFile)
 
 	if err != nil {
-		fmt.Printf("Error: can not load %s\n", configFile)
-		panic(err)
+		return err
 	}
 
-	// Parse config.yaml and store in configs
-	err = yaml.Unmarshal(yamlFile, &config.Yaml)
+	// Parse config file and store in configs
+	err = yaml.Unmarshal(yamlFile, &config)
 	if err != nil {
-		fmt.Printf("Error: parse %s failed\n", configFile)
-		panic(err)
+		return err
 	}
-
-	io, err := yaml.Marshal(config.Yaml)
-	if err != nil {
-		panic(err)
-	}
-	log.Println(string(io))
 
 	// Check if there is any config missing
-	errBool := checkConfigs()
-	return config, errBool
+	err = config.checkConfigs()
+	return err
 }
 
-func (configs *ConfigRecovery) ExecuteUDF() {
-	args := []string{configs.Yaml.Udf.Command, configs.Yaml.Configs.Release,
-		configs.Opt.Store, configs.Yaml.Configs.Store,
-		configs.Opt.Device, configs.Yaml.Configs.Device,
-		configs.Opt.Channel, configs.Yaml.Configs.Channel,
-		configs.Opt.BaseImage, configs.Yaml.Configs.BaseImage,
-		configs.Opt.Ssh,
-		configs.Opt.Size, configs.Yaml.Configs.Size,
-		configs.Opt.Devmode,
-		configs.Opt.Kernel, configs.Yaml.Snaps.Kernel,
-		configs.Opt.Os, configs.Yaml.Snaps.Os,
-		configs.Opt.Gadget, configs.Yaml.Snaps.Gadget}
-	for _, snap := range configs.Yaml.Configs.Packages {
+func (config *ConfigRecovery) ExecuteUDF() {
+	args := []string{
+		config.Udf.Command, config.Configs.Release,
+		"--channel", config.Configs.Channel,
+		"--output", config.Configs.BaseImage,
+		"--size", config.Configs.Size,
+		"--kernel", config.Snaps.Kernel,
+		"--os", config.Snaps.Os,
+		"--gadget", config.Snaps.Gadget}
+	if config.Debug.Devmode {
+		args = append(args, "--developer-mode")
+	}
+
+	if config.Debug.Ssh {
+		args = append(args, "--enable-ssh")
+	}
+
+	if config.Configs.Store != "" {
+		args = append(args, "--store", config.Configs.Store)
+	}
+
+	if config.Configs.Device != "" {
+		args = append(args, "--device", config.Configs.Device)
+	}
+
+	for _, snap := range config.Configs.Packages {
 		args = append(args, "--install="+snap)
 	}
-	Shellexec(configs.Yaml.Udf.Binary, args...)
+	Shellexec(config.Udf.Binary, args...)
+}
+
+func (config *ConfigRecovery) String() string {
+	io, err := yaml.Marshal(*config)
+	if err != nil {
+		panic(err)
+	}
+	return string(io)
 }
