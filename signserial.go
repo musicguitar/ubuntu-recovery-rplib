@@ -1,6 +1,7 @@
 package rplib
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -98,9 +99,33 @@ func SerialAssertionGen(modelAssertion asserts.Assertion, targetFolder string) (
 	// TODO: clarify the format of encodeKey
 	key = strings.Replace(key, "\n", "", -1)
 
+	// TODO: move out read serial number
+	var product_serial string
 	product_serial_content, err := ioutil.ReadFile(SMBIOS_SERIAL)
-	product_serial := strings.Split(string(product_serial_content), "\n")[0]
-	Checkerr(err)
+	if err != nil {
+		//For pi3
+		var flag = false
+		f, _ := os.Open("/proc/cpuinfo")
+		scanner := bufio.NewScanner(f)
+		for scanner.Scan() {
+			str := scanner.Text()
+			if strings.Contains(str, "Serial") == true {
+				fields := strings.Split(str, ": ")
+				product_serial = fields[1]
+				log.Println("Serial in cpuinfo: ", product_serial)
+				flag = true
+				break
+			}
+		}
+		//Shellexec("cat", "/proc/cpuinfo", "|", "grep", "Serial", "|", "awk", "' {print $3}'", ">", "/tmp/SERIAL")
+		//buf, err := ioutil.ReadFile("/tmp/SERIAL")
+		//product_serial = string(buf)
+		if flag == false {
+			panic("Serial number not found!\n")
+		}
+	} else {
+		product_serial = strings.Split(string(product_serial_content), "\n")[0]
+	}
 	serial := product_serial + "-" + uuid.NewV4().String()
 
 	serialAssertionUnsigned = Serial(authority, key, brand, model, revision, serial, time.Now())
