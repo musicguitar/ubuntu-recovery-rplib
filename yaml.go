@@ -2,9 +2,10 @@ package rplib
 
 import (
 	"errors"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
+
+	"gopkg.in/yaml.v2"
 )
 
 type ConfigRecovery struct {
@@ -28,6 +29,8 @@ type ConfigRecovery struct {
 		OemPostinstHookDir string `yaml:"oem-postinst-hook-dir"`
 		OemLogDir          string
 		Packages           []string
+		PartitionType      string `yaml:"partition-type"`
+		Bootloader         string `yaml:"bootloader"`
 	}
 	Udf struct {
 		Binary  string
@@ -77,6 +80,14 @@ func (config *ConfigRecovery) checkConfigs() (err error) {
 		log.Println(err)
 	}
 
+	if config.Configs.Arch == "" {
+		err = errors.New("'configs -> arch' field not presented")
+		log.Println(err)
+	} else if config.Configs.Arch != "amd64" && config.Configs.Arch != "arm" && config.Configs.Arch != "arm64" {
+		err = errors.New("'recovery -> Arch' only accept \"amd64\" or \"arm\" or \"arm64\"")
+		log.Println(err)
+	}
+
 	if config.Configs.BaseImage == "" {
 		err = errors.New("'configs -> baseimage' field not presented")
 		log.Println(err)
@@ -104,6 +115,22 @@ func (config *ConfigRecovery) checkConfigs() (err error) {
 
 	if config.Configs.Size == "" {
 		err = errors.New("'configs -> size' field not presented")
+		log.Println(err)
+	}
+
+	if config.Configs.PartitionType == "" {
+		err = errors.New("'recovery -> PartitionType' field not presented")
+		log.Println(err)
+	} else if config.Configs.PartitionType != "gpt" && config.Configs.PartitionType != "mbr" {
+		err = errors.New("'recovery -> PartitionType' only accept \"gpt\" or \"mbr\"")
+		log.Println(err)
+	}
+
+	if config.Configs.Bootloader == "" {
+		err = errors.New("'recovery -> PartitionType' field not presented")
+		log.Println(err)
+	} else if config.Configs.Bootloader != "grub" && config.Configs.Bootloader != "u-boot" {
+		err = errors.New("'recovery -> PartitionType' only accept \"grub\" or \"u-boot\"")
 		log.Println(err)
 	}
 

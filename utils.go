@@ -80,6 +80,18 @@ func GetPartitionBeginEnd(device string, nr int) (begin, end int) {
 	return
 }
 
+func GetPartitionBeginEnd64(device string, nr int) (begin, end int64) {
+	var err error
+	line := Shellcmdoutput(fmt.Sprintf("parted -ms %s unit B print | grep \"^%d:\"", device, nr))
+	log.Println("line:", line)
+	fields := strings.Split(line, ":")
+	begin, err = strconv.ParseInt(strings.TrimRight(fields[1], "B"), 10, 64)
+	Checkerr(err)
+	end, err = strconv.ParseInt(strings.TrimRight(fields[2], "B"), 10, 64)
+	Checkerr(err)
+	return
+}
+
 func GetBootEntries(keyword string) (entries []string) {
 	entryStr := Shellcmdoutput(fmt.Sprintf("efibootmgr -v | grep \"%s\" | cut -f 1 | sed 's/[^0-9]*//g'", keyword))
 	log.Printf("entryStr: [%s]\n", entryStr)
