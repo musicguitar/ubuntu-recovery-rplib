@@ -123,7 +123,7 @@ func SendSerialRequest(serialRequest asserts.Assertion, vaultServer string, apik
 
 	// send http/https request
 	vaultServer = strings.TrimRight(vaultServer, "/")
-	vaultServer = vaultServer + "/sign"
+	vaultServer = vaultServer + "/serial"
 	log.Println("send request to:", vaultServer)
 	req, err := http.NewRequest("POST", vaultServer, body)
 	if err != nil {
