@@ -9,6 +9,7 @@ import (
 )
 
 type ConfigRecovery struct {
+	// TODO: deprecate Snaps parameter
 	Project string
 	Snaps   struct {
 		Kernel string
@@ -16,13 +17,14 @@ type ConfigRecovery struct {
 		Gadget string
 	}
 	Configs struct {
+		// TODO: deprecate Store parameter
 		Arch               string
 		BaseImage          string
 		RecoveryType       string
 		RecoverySize       string
 		Release            string
 		Store              string
-		Device             string
+		Device             string // parameter for ubuntu-device-flash
 		Channel            string
 		Size               string
 		OemPreinstHookDir  string `yaml:"oem-preinst-hook-dir"`
@@ -31,6 +33,7 @@ type ConfigRecovery struct {
 		Packages           []string
 		PartitionType      string `yaml:"partition-type"`
 		Bootloader         string `yaml:"bootloader"`
+		ModelAssertion     string
 	}
 	Udf struct {
 		Binary  string
@@ -176,20 +179,14 @@ func (config *ConfigRecovery) ExecuteUDF() {
 		config.Udf.Command, config.Configs.Release,
 		"--channel", config.Configs.Channel,
 		"--output", config.Configs.BaseImage,
-		"--size", config.Configs.Size,
-		"--kernel", config.Snaps.Kernel,
-		"--os", config.Snaps.Os,
-		"--gadget", config.Snaps.Gadget}
+		config.Configs.ModelAssertion,
+	}
 	if config.Debug.Devmode {
 		args = append(args, "--developer-mode")
 	}
 
 	if config.Debug.Ssh {
 		args = append(args, "--enable-ssh")
-	}
-
-	if config.Configs.Store != "" {
-		args = append(args, "--store", config.Configs.Store)
 	}
 
 	if config.Configs.Device != "" {
